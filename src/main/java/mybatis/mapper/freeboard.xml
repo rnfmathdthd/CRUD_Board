@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>   
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.study.free.dao.IFreeBoardDao">
+
+<sql id="search">
+<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchWord)">
+			<choose>
+				<when test='searchType=="T"'>AND bo_title LIKE '%' || #{searchWord} || '%'    </when>
+				<when test='searchType=="W"'>AND bo_writer LIKE '%' || #{searchWord} || '%'
+				</when>
+				<when test='searchType=="C"'>AND bo_content LIKE '%' || #{searchWord} || '%'
+				</when>
+			</choose>
+		</if><!--@클래스풀네임@메소드이름(파라미터) -->
+		<if
+			test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchCategory)">
+			AND bo_category = #{searchCategory}
+		</if>
+</sql>
+
+	<select id="getBoardCount"
+		parameterType="com.study.free.vo.FreeBoardSearchVO" resultType="int">
+		SELECT count(*) FROM free_board
+		WHERE 1=1
+	  <include refid="search" />
+	
+	</select>
+
+	<select id="getBoardList"
+		parameterType="com.study.free.vo.FreeBoardSearchVO"
+		resultType="com.study.free.vo.FreeBoardVO">
+		<include refid="common.prePaging"></include>
+
+
+		SELECT
+		to_char(bo_reg_date,'YYYY-MM-DD') AS bo_reg_date ,
+		to_char(bo_mod_date,'YYYY-MM-DD') AS bo_mod_date ,
+		bo_no , bo_title ,
+		bo_category ,
+		bo_writer , bo_pass , bo_content ,
+		bo_ip , bo_hit ,
+		bo_del_yn ,
+		b.comm_nm AS bo_category_nm
+
+		FROM free_board a, comm_code b
+		WHERE a.bo_category = b.comm_cd
+
+	
+		<include refid="search" />
+		ORDER BY bo_no
+		<include refid="common.postPaging"/>
+		
+	</select>
+
+	<!-- resultType의 속성에 맞춰서 select 결과들이 자동으로 setting -->
+	<!-- mapUnderScoreToCamelcase로 인해  컬럼명:bo_no  VO:boNo  -->
+	<!-- 자동으로 setting되서 setBoNo(rs.getString("bo_no")) 필요없음 -->
+	<select id="getBoard" parameterType="int"
+		resultType="com.study.free.vo.FreeBoardVO">
+		SELECT
+		to_char(bo_reg_date,'YYYY-MM-DD') AS bo_reg_date ,
+		to_char(bo_mod_date,'YYYY-MM-DD') AS bo_mod_date ,
+		bo_no , bo_title ,
+		bo_category ,
+		bo_writer , bo_pass , bo_content ,
+		bo_ip , bo_hit ,
+		bo_del_yn ,
+		b.comm_nm AS bo_category_nm
+		FROM free_board a, comm_code b
+		WHERE a.bo_category = b.comm_cd
+		AND bo_no=#{boNo}
+	</select>
+	<update id="increaseHit" parameterType="int">
+		UPDATE free_board SET
+		bo_hit=bo_hit+1
+		WHERE bo_no=#{boNo}
+	</update>
+	<update id="updateBoard" parameterType="com.study.free.vo.FreeBoardVO">
+		UPDATE free_board SET
+		bo_title=#{boTitle}
+		,bo_category=#{boCategory}
+		,bo_content=#{boContent}
+		,bo_mod_date=sysdate
+		WHERE bo_no=#{boNo}
+	</update>
+	<delete id="deleteBoard" parameterType="com.study.free.vo.FreeBoardVO">
+		DELETE FROM free_board 
+		WHERE bo_no=#{boNo}
+	</delete>
+	<update id="insertBoard" parameterType="com.study.free.vo.FreeBoardVO">
+		INSERT INTO free_board VALUES(
+		seq_free_board.nextval, #{boTitle}, #{boCategory},
+		#{boWriter}, #{boPass}, #{boContent},
+		#{boIp}, 0, sysdate,
+		null, 'N'
+		)
+	</update>
+
+
+</mapper>    

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.study.reply.dao.IReplyDao">
+
+<select id="getReplyCountByParent" resultType="int" parameterType="com.study.reply.vo.ReplySearchVO">
+SELECT	count(*)
+FROM 	reply
+WHERE 	re_category = #{reCategory}
+AND		re_parent_no = #{reParentNo}
+</select>
+
+<select id="getReplyListByParent" resultType="com.study.reply.vo.ReplyVO" parameterType="com.study.reply.vo.ReplySearchVO">
+<include refid="common.prePaging"/>
+SELECT re_no
+       , re_category
+       , re_parent_no
+       , re_mem_id
+       , re_content
+       , re_ip
+       , re_reg_date
+       , re_mod_date
+       , (select mem_name
+          from member
+          where re_mem_id = mem_id)AS re_mem_name
+FROM reply
+WHERE re_parent_no = #{reParentNo}
+ORDER BY re_no DESC
+<include refid="common.postPaging"/>
+</select>
+
+
+<select id="getReply" parameterType="int" resultType="com.study.reply.vo.ReplyVO">
+SELECT re_no
+       , re_category
+       , re_parent_no
+       , re_mem_id
+       , re_content
+       , re_ip
+       , to_char(re_reg_date, 'YYYY-MM-DD') AS re_reg_date
+       , to_char(re_mod_date, 'YYYY-MM-DD') AS re_mod_date
+FROM reply
+WHERE re_no = #{reNo}
+</select>
+
+<insert id="insertReply" parameterType="com.study.reply.vo.ReplyVO">
+INSERT INTO reply 
+(
+		re_no
+       , re_category
+       , re_parent_no
+       , re_mem_id
+       , re_content
+       , re_ip
+       , re_reg_date
+       , re_mod_date
+)
+VALUES(
+		seq_reply.nextval
+       , #{reCategory}
+       , #{reParentNo}
+       , #{reMemId}
+       , #{reContent}
+       , #{reIp}
+       , SYSDATE
+       , NULL
+)
+</insert>
+
+
+<update id="updateReply" parameterType="com.study.reply.vo.ReplyVO">
+UPDATE reply SET 
+	re_content = #{reContent}
+	, re_mod_date = sysdate
+WHERE re_no = #{reNo}
+</update>
+
+
+<delete id="deleteReply" parameterType="com.study.reply.vo.ReplyVO">
+DELETE FROM reply
+WHERE re_no = #{reNo} 
+</delete>
+
+</mapper>
